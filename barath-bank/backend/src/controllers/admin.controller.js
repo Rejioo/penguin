@@ -154,3 +154,80 @@ exports.getDashboardStats = async (req, res) => {
     });
   }
 };
+/**
+ * Get all users with KYC status
+ */
+exports.getUsers = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT
+        u.id,
+        u.email,
+        u.username,
+        u.role,
+        p.full_name AS fullName,
+        k.kyc_status AS kycStatus
+      FROM users u
+      LEFT JOIN user_profiles p ON p.user_id = u.id
+      LEFT JOIN kyc_details k ON k.user_id = u.id
+      ORDER BY u.id DESC
+    `);
+
+    return res.json(rows);
+  } catch (err) {
+    console.error("getUsers error:", err);
+    return res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+/**
+ * Approve KYC
+ */
+exports.approveKyc = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const [result] = await pool.query(
+      `
+      UPDATE kyc_details
+      SET kyc_status = 'APPROVED', verified_at = NOW()
+      WHERE user_id = ?
+      `,
+      [userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "KYC record not found" });
+    }
+
+    return res.json({ message: "KYC approved" });
+  } catch (err) {
+    console.error("approveKyc error:", err);
+    return res.status(500).json({ message: "KYC approval failed" });
+  }
+};
+/**
+ * Reject KYC
+ */
+exports.rejectKyc = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const [result] = await pool.query(
+      `
+      UPDATE kyc_details
+      SET kyc_status = 'REJECTED'
+      WHERE user_id = ?
+      `,
+      [userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "KYC record not found" });
+    }
+
+    return res.json({ message: "KYC rejected" });
+  } catch (err) {
+    console.error("rejectKyc error:", err);
+    return res.status(500).json({ message: "KYC rejection failed" });
+  }
+};

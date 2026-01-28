@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
 
-// ---------------- HELPERS ----------------
+// helpers
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -13,10 +13,6 @@ async function findUserByIdentifier(connection, identifier) {
     [identifier, identifier]
   );
   return rows[0];
-}
-
-function generateAccountNumber() {
-  return "BA" + Date.now() + Math.floor(Math.random() * 1000);
 }
 
 // ---------------- REGISTER ----------------
@@ -67,7 +63,9 @@ async function register(req, res) {
 
     if (existing.length > 0) {
       await connection.rollback();
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({
+        message: "User already exists",
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -186,8 +184,7 @@ async function loginStep2(req, res) {
     }
 
     const [rows] = await connection.query(
-      `SELECT *
-       FROM otp_requests
+      `SELECT * FROM otp_requests
        WHERE user_id = ?
          AND purpose = 'LOGIN'
          AND is_used = false
@@ -225,7 +222,7 @@ async function loginStep2(req, res) {
   }
 }
 
-// ---------------- VERIFY REGISTER OTP (CREATES ACCOUNT) ----------------
+// ---------------- VERIFY REGISTER OTP ----------------
 async function verifyOtp(req, res) {
   const { identifier, otp } = req.body;
 
@@ -236,17 +233,13 @@ async function verifyOtp(req, res) {
   const connection = await pool.getConnection();
 
   try {
-    await connection.beginTransaction();
-
     const user = await findUserByIdentifier(connection, identifier);
     if (!user) {
-      await connection.rollback();
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
     const [rows] = await connection.query(
-      `SELECT *
-       FROM otp_requests
+      `SELECT * FROM otp_requests
        WHERE user_id = ?
          AND purpose = 'REGISTER'
          AND is_used = false
@@ -258,7 +251,6 @@ async function verifyOtp(req, res) {
 
     const record = rows[0];
     if (!record || record.otp_code !== otp) {
-      await connection.rollback();
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
@@ -272,29 +264,8 @@ async function verifyOtp(req, res) {
       [user.id]
     );
 
-    const [[existingAccount]] = await connection.query(
-      "SELECT id FROM accounts WHERE user_id = ?",
-      [user.id]
-    );
-
-    if (!existingAccount) {
-      const accountNumber = generateAccountNumber();
-
-      await connection.query(
-        `INSERT INTO accounts
-         (user_id, account_number, balance, currency, status)
-         VALUES (?, ?, 0, 'INR', 'ACTIVE')`,
-        [user.id, accountNumber]
-      );
-    }
-
-    await connection.commit();
-
-    return res.json({
-      message: "OTP verified and account created",
-    });
+    return res.json({ message: "OTP verified" });
   } catch (err) {
-    await connection.rollback();
     console.error(err);
     return res.status(500).json({ message: "OTP verification failed" });
   } finally {
@@ -338,7 +309,7 @@ async function resendRegisterOtp(req, res) {
   }
 }
 
-// ---------------- EXPORTS ----------------
+// 🔑 THIS IS THE IMPORTANT PART
 module.exports = {
   register,
   loginStep1,

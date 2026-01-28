@@ -48,5 +48,25 @@ router.post(
   adminMiddleware,
   adminController.rejectTransaction
 );
+router.get(
+  "/users",
+  authMiddleware,
+  adminMiddleware,
+  adminController.getUsers
+);
+
+router.post(
+  "/kyc/:userId/approve",
+  authMiddleware,
+  adminMiddleware,
+  adminController.approveKyc
+);
+
+router.post(
+  "/kyc/:userId/reject",
+  authMiddleware,
+  adminMiddleware,
+  adminController.rejectKyc
+);
 
 module.exports = router;

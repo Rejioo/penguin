@@ -24,6 +24,7 @@ const AdminFraud = () => {
       }));
 
       setTxns(normalized);
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError("Failed to load flagged transactions");
     } finally {
@@ -40,6 +41,7 @@ const AdminFraud = () => {
       setActionLoading(id);
       await api.post(`/api/admin/transactions/${id}/${action}`);
       await fetchFlagged();
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
       alert("Action failed");
     } finally {
