@@ -4,7 +4,10 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import LoginPage from "../auth/LoginPage";
 import OtpPage from "../auth/OtpPage";
 import RegisterPage from "../auth/RegisterPage";
-
+import TransferPage from "../pages/transactions/TransferPage";
+import TransactionsPage from "../pages/transactions/TransactionsPage";
+import AccountsPage from "../pages/accounts/AccountsPage";
+import ProfilePage from "../pages/profile/ProfilePage";
 function App() {
   return (
     <Routes>
@@ -12,7 +15,12 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/otp" element={<OtpPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/transfer" element={<TransferPage />} />
+      <Route path="/transactions" element={<TransactionsPage />} />
+      <Route path="/accounts" element={<AccountsPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
 
+      
       {/* Protected */}
       <Route
         path="/dashboard"

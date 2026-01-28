@@ -2,13 +2,13 @@ import { useState } from "react";
 import { api } from "../../services/api";
 
 export default function TransferPage() {
-  const [toAccount, setToAccount] = useState("");
+  const [toAccountNumber, setToAccountNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  async function handleTransfer(e) {
+  async function submit(e) {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -16,15 +16,13 @@ export default function TransferPage() {
 
     try {
       const res = await api.post("/api/transactions/transfer", {
-        toAccountNumber: toAccount,
+        toAccountNumber,
         amount: Number(amount),
       });
 
       setResult(res.data);
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Transfer failed"
-      );
+      setError(err.response?.data?.message || "Transfer failed");
     } finally {
       setLoading(false);
     }
@@ -34,12 +32,12 @@ export default function TransferPage() {
     <div className="page">
       <h1>Transfer Money</h1>
 
-      <form onSubmit={handleTransfer}>
+      <form onSubmit={submit}>
         <div>
           <label>To Account Number</label>
           <input
-            value={toAccount}
-            onChange={(e) => setToAccount(e.target.value)}
+            value={toAccountNumber}
+            onChange={(e) => setToAccountNumber(e.target.value)}
             required
           />
         </div>
@@ -60,13 +58,12 @@ export default function TransferPage() {
       </form>
 
       {result && (
-        <div className="success">
-          <p>{result.message}</p>
-          <p>Risk score: {result.riskScore}</p>
-        </div>
+        <pre style={{ marginTop: 16 }}>
+          {JSON.stringify(result, null, 2)}
+        </pre>
       )}
 
-      {error && <div className="error">{error}</div>}
+      {error && <p className="error">{error}</p>}
     </div>
   );
 }

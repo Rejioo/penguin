@@ -227,7 +227,7 @@ exports.transfer = async (req, res) => {
       txnCount24h,
     });
 
-    const finalRisk = Math.max(boostedMlRisk, ruleRisk);
+    const finalRisk = Math.max( ruleRisk);
     const { decision, status } = decideAction(finalRisk);
 
     console.log("=== FRAUD DEBUG ===");
