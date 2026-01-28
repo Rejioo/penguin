@@ -1,0 +1,564 @@
+Enter password: ****
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.45 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> mysql -u root -p
+    ->
+    -> ;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'mysql -u root -p' at line 1
+mysql> CREATE DATABASE smart_banking;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> USE smart_banking;
+Database changed
+mysql> CREATE TABLE users (
+    ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->   email VARCHAR(255) NOT NULL UNIQUE,
+    ->   phone VARCHAR(20) NOT NULL UNIQUE,
+    ->   username VARCHAR(50) NOT NULL UNIQUE,
+    ->   password_hash VARCHAR(255) NOT NULL,
+    ->   role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
+    ->   is_email_verified BOOLEAN DEFAULT FALSE,
+    ->   is_phone_verified BOOLEAN DEFAULT FALSE,
+    ->   is_active BOOLEAN DEFAULT TRUE,
+    ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ->                ON UPDATE CURRENT_TIMESTAMP
+    -> );
+Query OK, 0 rows affected (0.07 sec)
+
+mysql> CREATE TABLE user_profiles (
+    ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->
+    ->   user_id BIGINT NOT NULL,
+    ->
+    ->   full_name VARCHAR(150) NOT NULL,
+    ->
+    ->   address_line VARCHAR(255) NOT NULL,
+    ->   city VARCHAR(100) NOT NULL,
+    ->   state VARCHAR(100) NOT NULL,
+    ->   pincode VARCHAR(10) NOT NULL,
+    ->
+    ->   employment_type ENUM(
+    ->     'salaried',
+    ->     'self-employed',
+    ->     'student',
+    ->     'retired'
+    ->   ) NOT NULL,
+    ->
+    ->   income_range ENUM(
+    ->     '0-2',
+    ->     '2-5',
+    ->     '5-10',
+    ->     '10-25',
+    ->     '25+'
+    ->   ) NOT NULL,
+    ->
+    ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ->                ON UPDATE CURRENT_TIMESTAMP,
+    ->
+    ->   CONSTRAINT fk_user_profile_user
+    ->     FOREIGN KEY (user_id)
+    ->     REFERENCES users(id)
+    ->     ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> CREATE TABLE kyc_details (
+    ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->
+    ->   user_id BIGINT NOT NULL,
+    ->
+    ->   pan VARCHAR(10) NOT NULL,
+    ->   aadhaar VARCHAR(12) NOT NULL,
+    ->
+    ->   kyc_status ENUM(
+    ->     'PENDING',
+    ->     'APPROVED',
+    ->     'REJECTED'
+    ->   ) NOT NULL DEFAULT 'PENDING',
+    ->
+    ->   verified_at TIMESTAMP NULL,
+    ->   remarks VARCHAR(255),
+    ->
+    ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->
+    ->   CONSTRAINT fk_kyc_user
+    ->     FOREIGN KEY (user_id)
+    ->     REFERENCES users(id)
+    ->     ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> CREATE TABLE otp_requests (
+    ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->
+    ->   user_id BIGINT NOT NULL,
+    ->   otp_code VARCHAR(6) NOT NULL,
+    ->
+    ->   purpose ENUM(
+    ->     'LOGIN',
+    ->     'REGISTER',
+    ->     'TRANSACTION'
+    ->   ) NOT NULL,
+    ->
+    ->   expires_at DATETIME NOT NULL,
+    ->   is_used BOOLEAN DEFAULT FALSE,
+    ->
+    ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->
+    ->   CONSTRAINT fk_otp_user
+    ->     FOREIGN KEY (user_id)
+    ->     REFERENCES users(id)
+    ->     ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> CREATE INDEX idx_users_email ON users(email);
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX idx_users_phone ON users(phone);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX idx_otp_user ON otp_requests(user_id);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> CREATE INDEX idx_kyc_status ON kyc_details(kyc_status);
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> SHOW TABLES;
++-------------------------+
+| Tables_in_smart_banking |
++-------------------------+
+| kyc_details             |
+| otp_requests            |
+| user_profiles           |
+| users                   |
++-------------------------+
+4 rows in set (0.02 sec)
+
+mysql> select * from users
+    -> ;
++----+-------------------------+------------+-------------+--------------------------------------------------------------+------+-------------------+-------------------+-----------+---------------------+---------------------+
+| id | email                   | phone      | username    | password_hash                                                | role | is_email_verified | is_phone_verified | is_active | created_at          | updated_at          |
++----+-------------------------+------------+-------------+--------------------------------------------------------------+------+-------------------+-------------------+-----------+---------------------+---------------------+
+|  1 | testuser123@example.com | 9876543211 | testuser123 | $2b$10$c86cSqWxu3tQ9uvYfC9g5ujuH3.Q6QideETxcmKvnrDzyF1y2uF.e | USER |                 0 |                 0 |         1 | 2026-01-21 13:28:54 | 2026-01-21 13:28:54 |
++----+-------------------------+------------+-------------+--------------------------------------------------------------+------+-------------------+-------------------+-----------+---------------------+---------------------+
+1 row in set (0.00 sec)
+
+mysql> CREATE USER 'bank_app'@'localhost' IDENTIFIED BY 'bank_pass123';
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> GRANT ALL PRIVILEGES ON smart_banking.* TO 'bank_app'@'localhost';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> <!DOCTYPE html>
+    -> <html lang="en">
+    ->
+    -> <head>
+    ->     <meta charset="utf-8">
+    ->     <title>Error</title>
+    -> </head>
+    ->
+    -> <body>
+    ->     <pre>Cannot POST /api/user/me</pre>
+    -> </body>
+    ->
+    -> </html>^C
+mysql> ^C
+mysql> ^C
+mysql> CREATE TABLE accounts (
+    ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->
+    ->   user_id BIGINT NOT NULL,
+    ->
+    ->   account_number VARCHAR(20) NOT NULL UNIQUE,
+    ->   account_type ENUM('SAVINGS', 'CURRENT') NOT NULL DEFAULT 'SAVINGS',
+    ->
+    ->   balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    ->   currency CHAR(3) NOT NULL DEFAULT 'INR',
+    ->
+    ->   status ENUM('ACTIVE', 'FROZEN', 'CLOSED') NOT NULL DEFAULT 'ACTIVE',
+    ->
+    ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->
+    ->   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> CREATE TABLE transactions (
+    ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->
+    ->   from_account_id BIGINT NOT NULL,
+    ->   to_account_id BIGINT NOT NULL,
+    ->
+    ->   amount DECIMAL(15,2) NOT NULL,
+    ->   currency CHAR(3) NOT NULL DEFAULT 'INR',
+    ->
+    ->   type ENUM('TRANSFER') NOT NULL,
+    ->   status ENUM('SUCCESS', 'FAILED', 'FLAGGED') NOT NULL,
+    ->
+    ->   risk_score DECIMAL(5,2) DEFAULT NULL,
+    ->   failure_reason VARCHAR(255),
+    ->
+    ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->
+    ->   FOREIGN KEY (from_account_id) REFERENCES accounts(id),
+    ->   FOREIGN KEY (to_account_id) REFERENCES accounts(id)
+    -> );
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> UPDATE accounts
+    -> SET balance = 5000
+    -> WHERE user_id = 4;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> Enter password: ****
+    -> Welcome to the MySQL monitor.  Commands end with ; or \g.
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Enter password: ****
+Welcome to the MySQL monitor.  Commands end with' at line 1
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'or' at line 1
+    -> Your MySQL connection id is 8
+    -> Server version: 8.0.45 MySQL Community Server - GPL
+    ->
+    -> Copyright (c) 2000, 2026, Oracle and/or its affiliates.
+    ->
+    -> Oracle is a registered trademark of Oracle Corporation and/or its
+    -> affiliates. Other names may be trademarks of their respective
+    -> owners.
+    ->
+    -> Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+    ->
+    -> mysql> mysql -u root -p
+    ->     ->
+    ->     -> ;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '.
+Your MySQL connection id is 8
+Server version: 8.0.45 MySQL Community Server - ' at line 1
+mysql> ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'mysql -u root -p' at line 1
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'ERROR 1064 (42000): You have an error in your SQL syntax' at line 1
+    -> mysql> CREATE DATABASE smart_banking;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'the manual that corresponds to your MySQL server version for the right syntax to' at line 1
+mysql> Query OK, 1 row affected (0.01 sec)
+    ->
+    -> mysql> USE smart_banking;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 1 row affected (0.01 sec)
+
+mysql> USE smart_banking' at line 1
+mysql> Database changed
+    -> mysql> CREATE TABLE users (
+    ->     ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->     ->   email VARCHAR(255) NOT NULL UNIQUE,
+    ->     ->   phone VARCHAR(20) NOT NULL UNIQUE,
+    ->     ->   username VARCHAR(50) NOT NULL UNIQUE,
+    ->     ->   password_hash VARCHAR(255) NOT NULL,
+    ->     ->   role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
+    ->     ->   is_email_verified BOOLEAN DEFAULT FALSE,
+    ->     ->   is_phone_verified BOOLEAN DEFAULT FALSE,
+    ->     ->   is_active BOOLEAN DEFAULT TRUE,
+    ->     ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     ->   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ->     ->                ON UPDATE CURRENT_TIMESTAMP
+    ->     -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Database changed
+mysql> CREATE TABLE users (
+    ->   id BIGINT AUTO_INCREMENT P' at line 1
+mysql> Query OK, 0 rows affected (0.07 sec)
+    ->
+    -> mysql> CREATE TABLE user_profiles (
+    ->     ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->     ->
+    ->     ->   user_id BIGINT NOT NULL,
+    ->     ->
+    ->     ->   full_name VARCHAR(150) NOT NULL,
+    ->     ->
+    ->     ->   address_line VARCHAR(255) NOT NULL,
+    ->     ->   city VARCHAR(100) NOT NULL,
+    ->     ->   state VARCHAR(100) NOT NULL,
+    ->     ->   pincode VARCHAR(10) NOT NULL,
+    ->     ->
+    ->     ->   employment_type ENUM(
+    ->     ->     'salaried',
+    ->     ->     'self-employed',
+    ->     ->     'student',
+    ->     ->     'retired'
+    ->     ->   ) NOT NULL,
+    ->     ->
+    ->     ->   income_range ENUM(
+    ->     ->     '0-2',
+    ->     ->     '2-5',
+    ->     ->     '5-10',
+    ->     ->     '10-25',
+    ->     ->     '25+'
+    ->     ->   ) NOT NULL,
+    ->     ->
+    ->     ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     ->   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ->     ->                ON UPDATE CURRENT_TIMESTAMP,
+    ->     ->
+    ->     ->   CONSTRAINT fk_user_profile_user
+    ->     ->     FOREIGN KEY (user_id)
+    ->     ->     REFERENCES users(id)
+    ->     ->     ON DELETE CASCADE
+    ->     -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.07 sec)
+
+mysql> CREATE TABLE user_profiles (
+    ->' at line 1
+mysql> Query OK, 0 rows affected (0.04 sec)
+    ->
+    -> mysql> CREATE TABLE kyc_details (
+    ->     ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->     ->
+    ->     ->   user_id BIGINT NOT NULL,
+    ->     ->
+    ->     ->   pan VARCHAR(10) NOT NULL,
+    ->     ->   aadhaar VARCHAR(12) NOT NULL,
+    ->     ->
+    ->     ->   kyc_status ENUM(
+    ->     ->     'PENDING',
+    ->     ->     'APPROVED',
+    ->     ->     'REJECTED'
+    ->     ->   ) NOT NULL DEFAULT 'PENDING',
+    ->     ->
+    ->     ->   verified_at TIMESTAMP NULL,
+    ->     ->   remarks VARCHAR(255),
+    ->     ->
+    ->     ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     ->
+    ->     ->   CONSTRAINT fk_kyc_user
+    ->     ->     FOREIGN KEY (user_id)
+    ->     ->     REFERENCES users(id)
+    ->     ->     ON DELETE CASCADE
+    ->     -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.04 sec)
+
+mysql> CREATE TABLE kyc_details (
+    ->  ' at line 1
+mysql> Query OK, 0 rows affected (0.04 sec)
+    ->
+    -> mysql> CREATE TABLE otp_requests (
+    ->     ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->     ->
+    ->     ->   user_id BIGINT NOT NULL,
+    ->     ->   otp_code VARCHAR(6) NOT NULL,
+    ->     ->
+    ->     ->   purpose ENUM(
+    ->     ->     'LOGIN',
+    ->     ->     'REGISTER',
+    ->     ->     'TRANSACTION'
+    ->     ->   ) NOT NULL,
+    ->     ->
+    ->     ->   expires_at DATETIME NOT NULL,
+    ->     ->   is_used BOOLEAN DEFAULT FALSE,
+    ->     ->
+    ->     ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     ->
+    ->     ->   CONSTRAINT fk_otp_user
+    ->     ->     FOREIGN KEY (user_id)
+    ->     ->     REFERENCES users(id)
+    ->     ->     ON DELETE CASCADE
+    ->     -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.04 sec)
+
+mysql> CREATE TABLE otp_requests (
+    -> ' at line 1
+mysql> Query OK, 0 rows affected (0.05 sec)
+    ->
+    -> mysql> CREATE INDEX idx_users_email ON users(email);
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.05 sec)
+
+mysql> CREATE INDEX idx_users_email ON use' at line 1
+mysql> Query OK, 0 rows affected (0.04 sec)
+    -> Records: 0  Duplicates: 0  Warnings: 0
+    ->
+    -> mysql> CREATE INDEX idx_users_phone ON users(phone);
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mys' at line 1
+mysql> Query OK, 0 rows affected (0.03 sec)
+    -> Records: 0  Duplicates: 0  Warnings: 0
+    ->
+    -> mysql> CREATE INDEX idx_otp_user ON otp_requests(user_id);
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mys' at line 1
+mysql> Query OK, 0 rows affected (0.03 sec)
+    -> Records: 0  Duplicates: 0  Warnings: 0
+    ->
+    -> mysql> CREATE INDEX idx_kyc_status ON kyc_details(kyc_status);
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mys' at line 1
+mysql> Query OK, 0 rows affected (0.04 sec)
+    -> Records: 0  Duplicates: 0  Warnings: 0
+    ->
+    -> mysql> SHOW TABLES;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mys' at line 1
+mysql> +-------------------------+
+    -> | Tables_in_smart_banking |
+    -> +-------------------------+
+    -> | kyc_details             |
+    -> | otp_requests            |
+    -> | user_profiles           |
+    -> | users                   |
+    -> +-------------------------+
+    -> 4 rows in set (0.02 sec)
+    ->
+    -> mysql> select * from users
+    ->     -> ;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '+-------------------------+
+| Tables_in_smart_banking |
++-----------------------' at line 1
+mysql> +----+-------------------------+------------+-------------+--------------------------------------------------------------+------+-------------------+-------------------+-----------+---------------------+---------------------+
+    -> | id | email                   | phone      | username    | password_hash                                                | role | is_email_verified | is_phone_verified | is_active | created_at          | updated_at          |
+    -> +----+-------------------------+------------+-------------+--------------------------------------------------------------+------+-------------------+-------------------+-----------+---------------------+---------------------+
+    -> |  1 | testuser123@example.com | 9876543211 | testuser123 | $2b$10$c86cSqWxu3tQ9uvYfC9g5ujuH3.Q6QideETxcmKvnrDzyF1y2uF.e | USER |                 0 |                 0 |         1 | 2026-01-21 13:28:54 | 2026-01-21 13:28:54 |
+    -> +----+-------------------------+------------+-------------+--------------------------------------------------------------+------+-------------------+-------------------+-----------+---------------------+---------------------+
+    -> 1 row in set (0.00 sec)
+    ->
+    -> mysql> CREATE USER 'bank_app'@'localhost' IDENTIFIED BY 'bank_pass123';
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '+----+-------------------------+------------+-------------+---------------------' at line 1
+mysql> Query OK, 0 rows affected (0.04 sec)
+    ->
+    -> mysql> GRANT ALL PRIVILEGES ON smart_banking.* TO 'bank_app'@'localhost';
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.04 sec)
+
+mysql> GRANT ALL PRIVILEGES ON smart_banki' at line 1
+mysql> Query OK, 0 rows affected (0.01 sec)
+    ->
+    -> mysql> FLUSH PRIVILEGES;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.01 sec)
+
+mysql> FLUSH PRIVILEGES' at line 1
+mysql> Query OK, 0 rows affected (0.01 sec)
+    ->
+    -> mysql> <!DOCTYPE html>
+    ->     -> <html lang="en">
+    ->     ->
+    ->     -> <head>
+    ->     ->     <meta charset="utf-8">
+    ->     ->     <title>Error</title>
+    ->     -> </head>
+    ->     ->
+    ->     -> <body>
+    ->     ->     <pre>Cannot POST /api/user/me</pre>
+    ->     -> </body>
+    ->     ->
+    ->     -> </html>^C
+    -> mysql> ^C
+    -> mysql> ^C
+    -> mysql> CREATE TABLE accounts (
+    ->     ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->     ->
+    ->     ->   user_id BIGINT NOT NULL,
+    ->     ->
+    ->     ->   account_number VARCHAR(20) NOT NULL UNIQUE,
+    ->     ->   account_type ENUM('SAVINGS', 'CURRENT') NOT NULL DEFAULT 'SAVINGS',
+    ->     ->
+    ->     ->   balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    ->     ->   currency CHAR(3) NOT NULL DEFAULT 'INR',
+    ->     ->
+    ->     ->   status ENUM('ACTIVE', 'FROZEN', 'CLOSED') NOT NULL DEFAULT 'ACTIVE',
+    ->     ->
+    ->     ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     ->
+    ->     ->   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ->     -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.01 sec)
+
+mysql> <!DOCTYPE html>
+    -> <html lang="' at line 1
+mysql> Query OK, 0 rows affected (0.06 sec)
+    ->
+    -> mysql> CREATE TABLE transactions (
+    ->     ->   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ->     ->
+    ->     ->   from_account_id BIGINT NOT NULL,
+    ->     ->   to_account_id BIGINT NOT NULL,
+    ->     ->
+    ->     ->   amount DECIMAL(15,2) NOT NULL,
+    ->     ->   currency CHAR(3) NOT NULL DEFAULT 'INR',
+    ->     ->
+    ->     ->   type ENUM('TRANSFER') NOT NULL,
+    ->     ->   status ENUM('SUCCESS', 'FAILED', 'FLAGGED') NOT NULL,
+    ->     ->
+    ->     ->   risk_score DECIMAL(5,2) DEFAULT NULL,
+    ->     ->   failure_reason VARCHAR(255),
+    ->     ->
+    ->     ->   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     ->
+    ->     ->   FOREIGN KEY (from_account_id) REFERENCES accounts(id),
+    ->     ->   FOREIGN KEY (to_account_id) REFERENCES accounts(id)
+    ->     -> );
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.06 sec)
+
+mysql> CREATE TABLE transactions (
+    -> ' at line 1
+mysql> Query OK, 0 rows affected (0.06 sec)
+    ->
+    -> mysql> UPDATE accounts
+    ->     -> SET balance = 5000
+    ->     -> WHERE user_id = 4;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Query OK, 0 rows affected (0.06 sec)
+
+mysql> UPDATE accounts
+    -> SET balance ' at line 1
+mysql> Query OK, 1 row affected (0.01 sec)
+    -> Rows matched: 1  Changed: 1  Warnings: 0
+    ->
+    -> mysql>^C
+mysql> ^C
+mysql> ^C
+mysql>
+
+
+
+
+
+
+
+
+
+CREATE TABLE user_devices (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  device_hash VARCHAR(128) NOT NULL,
+  first_seen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_seen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_user_device (user_id, device_hash)
+);
+
+
+CREATE TABLE user_ip_history (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  ip_address VARCHAR(45),
+  country_code CHAR(2),
+  first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
+);
