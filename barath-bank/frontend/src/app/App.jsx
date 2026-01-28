@@ -8,6 +8,15 @@ import TransferPage from "../pages/transactions/TransferPage";
 import TransactionsPage from "../pages/transactions/TransactionsPage";
 import AccountsPage from "../pages/accounts/AccountsPage";
 import ProfilePage from "../pages/profile/ProfilePage";
+
+import SecurityPage from "../pages/profile/SecurityPage"
+
+
+import AdminFraud from "../pages/admin/AdminFraud";
+
+
+
+
 function App() {
   return (
     <Routes>
@@ -19,6 +28,7 @@ function App() {
       <Route path="/transactions" element={<TransactionsPage />} />
       <Route path="/accounts" element={<AccountsPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/security" element={<SecurityPage />} />
 
       
       {/* Protected */}
@@ -30,6 +40,16 @@ function App() {
           </RequireAuth>
         }
       />
+      {/* admin  */}
+        <Route
+          path="/admin/fraud"
+          element={
+            <RequireAuth>
+              <AdminFraud />
+            </RequireAuth>
+          }
+        />
+
 
       {/* Default */}
       <Route path="/" element={<Navigate to="/login" replace />} />

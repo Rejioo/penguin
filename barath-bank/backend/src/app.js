@@ -35,6 +35,7 @@ const userRoutes = require("./routes/user.routes");
 const accountRoutes = require("./routes/account.routes");
 const transactionRoutes = require("./routes/transaction.routes");
 const adminRoutes = require("./routes/admin.routes");
+const securityRoutes = require("./routes/security.routes");
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/security", securityRoutes);
 
 /**
  * Health check

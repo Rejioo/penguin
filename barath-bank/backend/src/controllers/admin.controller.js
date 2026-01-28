@@ -22,7 +22,7 @@ exports.getFlaggedTransactions = async (req, res) => {
 
     return res.json(rows);
   } catch (err) {
-    console.error(err);
+    console.error("getFlaggedTransactions error:", err);
     return res.status(500).json({
       message: "Failed to fetch flagged transactions",
     });
@@ -40,7 +40,8 @@ exports.approveTransaction = async (req, res) => {
     await connection.beginTransaction();
 
     const [[txn]] = await connection.query(
-      `SELECT * FROM transactions WHERE id = ? AND status = 'FLAGGED'`,
+      `SELECT * FROM transactions
+       WHERE id = ? AND status = 'FLAGGED'`,
       [transactionId]
     );
 
@@ -51,18 +52,19 @@ exports.approveTransaction = async (req, res) => {
       });
     }
 
-    // move money
+    // debit sender
     await connection.query(
       "UPDATE accounts SET balance = balance - ? WHERE id = ?",
       [txn.amount, txn.from_account_id]
     );
 
+    // credit receiver
     await connection.query(
       "UPDATE accounts SET balance = balance + ? WHERE id = ?",
       [txn.amount, txn.to_account_id]
     );
 
-    // mark transaction approved
+    // mark success
     await connection.query(
       "UPDATE transactions SET status = 'SUCCESS' WHERE id = ?",
       [transactionId]
@@ -75,7 +77,7 @@ exports.approveTransaction = async (req, res) => {
     });
   } catch (err) {
     await connection.rollback();
-    console.error(err);
+    console.error("approveTransaction error:", err);
     return res.status(500).json({
       message: "Approval failed",
     });
@@ -108,12 +110,13 @@ exports.rejectTransaction = async (req, res) => {
       message: "Transaction rejected",
     });
   } catch (err) {
-    console.error(err);
+    console.error("rejectTransaction error:", err);
     return res.status(500).json({
       message: "Rejection failed",
     });
   }
 };
+
 /**
  * Admin dashboard statistics
  */
@@ -129,27 +132,23 @@ exports.getDashboardStats = async (req, res) => {
     `);
 
     const [[userStats]] = await pool.query(`
-      SELECT
-        COUNT(*) AS totalUsers
-      FROM users
+      SELECT COUNT(*) AS totalUsers FROM users
     `);
 
     const [[accountStats]] = await pool.query(`
-      SELECT
-        COUNT(*) AS totalAccounts
-      FROM accounts
+      SELECT COUNT(*) AS totalAccounts FROM accounts
     `);
 
     return res.json({
-      totalTransactions: txnStats.totalTransactions || 0,
-      flaggedTransactions: txnStats.flaggedTransactions || 0,
-      successfulTransactions: txnStats.successfulTransactions || 0,
-      rejectedTransactions: txnStats.rejectedTransactions || 0,
-      totalUsers: userStats.totalUsers || 0,
-      totalAccounts: accountStats.totalAccounts || 0,
+      totalTransactions: Number(txnStats.totalTransactions) || 0,
+      flaggedTransactions: Number(txnStats.flaggedTransactions) || 0,
+      successfulTransactions: Number(txnStats.successfulTransactions) || 0,
+      rejectedTransactions: Number(txnStats.rejectedTransactions) || 0,
+      totalUsers: Number(userStats.totalUsers) || 0,
+      totalAccounts: Number(accountStats.totalAccounts) || 0,
     });
   } catch (err) {
-    console.error(err);
+    console.error("getDashboardStats error:", err);
     return res.status(500).json({
       message: "Failed to fetch admin dashboard stats",
     });

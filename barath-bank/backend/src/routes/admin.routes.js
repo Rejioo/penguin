@@ -5,6 +5,21 @@ const authMiddleware = require("../middleware/auth.middleware");
 const adminMiddleware = require("../middleware/admin.middleware");
 const adminController = require("../controllers/admin.controller");
 
+/**
+ * Dashboard stats
+ * GET /api/admin/stats
+ */
+router.get(
+  "/stats",
+  authMiddleware,
+  adminMiddleware,
+  adminController.getDashboardStats
+);
+
+/**
+ * Flagged transactions
+ * GET /api/admin/transactions/flagged
+ */
 router.get(
   "/transactions/flagged",
   authMiddleware,
@@ -12,6 +27,10 @@ router.get(
   adminController.getFlaggedTransactions
 );
 
+/**
+ * Approve transaction
+ * POST /api/admin/transactions/:id/approve
+ */
 router.post(
   "/transactions/:id/approve",
   authMiddleware,
@@ -19,6 +38,10 @@ router.post(
   adminController.approveTransaction
 );
 
+/**
+ * Reject transaction
+ * POST /api/admin/transactions/:id/reject
+ */
 router.post(
   "/transactions/:id/reject",
   authMiddleware,
@@ -27,9 +50,3 @@ router.post(
 );
 
 module.exports = router;
-router.get(
-  "/stats",
-  authMiddleware,
-  adminMiddleware,
-  adminController.getDashboardStats
-);
