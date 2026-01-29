@@ -1,11 +1,14 @@
-export default function AdminSidebar() {
+import Sidebar from "./Sidebar";
+import Topbar from "./Topbar";
+
+export default function AdminLayout({ children }) {
   return (
-    <aside className="sidebar">
-      <nav>
-        <a href="/admin">Dashboard</a>
-        <a href="/admin/fraud">Fraud</a>
-        <a href="/admin/users">Users</a>
-      </nav>
-    </aside>
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
+        <Topbar />
+        <div className="app-content">{children}</div>
+      </div>
+    </div>
   );
 }

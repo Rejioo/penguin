@@ -289,24 +289,61 @@ console.log("Boosted ML risk:", boostedMlRisk);
 /**
  * TRANSACTION HISTORY
  */
+// exports.getMyTransactions = async (req, res) => {
+//   const userId = req.user.userId;
+
+//   try {
+//     const [rows] = await pool.query(
+//       `SELECT t.id,
+//               t.amount,
+//               t.status,
+//               t.risk_score,
+//               t.created_at,
+//               fa.account_number AS from_account,
+//               ta.account_number AS to_account
+//        FROM transactions t
+//        JOIN accounts fa ON t.from_account_id = fa.id
+//        JOIN accounts ta ON t.to_account_id = ta.id
+//        WHERE fa.user_id = ? OR ta.user_id = ?
+//        ORDER BY t.created_at DESC`,
+//       [userId, userId]
+//     );
+
+//     return res.json(rows);
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Failed to fetch transactions" });
+//   }
+// };
+/**
+ * TRANSACTION HISTORY
+ * GET /api/transactions
+ */
 exports.getMyTransactions = async (req, res) => {
   const userId = req.user.userId;
 
   try {
     const [rows] = await pool.query(
-      `SELECT t.id,
-              t.amount,
-              t.status,
-              t.risk_score,
-              t.created_at,
-              fa.account_number AS from_account,
-              ta.account_number AS to_account
-       FROM transactions t
-       JOIN accounts fa ON t.from_account_id = fa.id
-       JOIN accounts ta ON t.to_account_id = ta.id
-       WHERE fa.user_id = ? OR ta.user_id = ?
-       ORDER BY t.created_at DESC`,
-      [userId, userId]
+      `
+      SELECT
+        t.id,
+        t.amount,
+        t.status,
+        t.risk_score,
+        t.created_at,
+        fa.account_number AS from_account,
+        ta.account_number AS to_account,
+        CASE
+          WHEN fa.user_id = ? THEN 'DEBIT'
+          ELSE 'CREDIT'
+        END AS type
+      FROM transactions t
+      JOIN accounts fa ON t.from_account_id = fa.id
+      JOIN accounts ta ON t.to_account_id = ta.id
+      WHERE fa.user_id = ? OR ta.user_id = ?
+      ORDER BY t.created_at DESC
+      `,
+      [userId, userId, userId]
     );
 
     return res.json(rows);

@@ -28,42 +28,64 @@ export default function TransferPage() {
     }
   }
 
+  const riskScore = result?.riskScore;
+
+  const riskClass =
+    riskScore >= 0.75
+      ? "danger"
+      : riskScore >= 0.45
+      ? "warning"
+      : "safe";
+
   return (
-    <div className="page">
-      <h1>Transfer Money</h1>
+    <div className="transfer-page">
+      <div className="transfer-card">
+        <h1 className="transfer-title">Transfer Money</h1>
+        <p className="transfer-subtitle">
+          Secure transfer with AI fraud detection
+        </p>
 
-      <form onSubmit={submit}>
-        <div>
-          <label>To Account Number</label>
-          <input
-            value={toAccountNumber}
-            onChange={(e) => setToAccountNumber(e.target.value)}
-            required
-          />
-        </div>
+        {error && <div className="alert alert-error">{error}</div>}
 
-        <div>
-          <label>Amount</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-        </div>
+        <form className="transfer-form" onSubmit={submit}>
+          <div>
+            <label>Recipient Account Number</label>
+            <input
+              placeholder="BAxxxxxxxxxxxx"
+              value={toAccountNumber}
+              onChange={(e) => setToAccountNumber(e.target.value)}
+              required
+            />
+          </div>
 
-        <button disabled={loading}>
-          {loading ? "Processing…" : "Transfer"}
-        </button>
-      </form>
+          <div>
+            <label>Amount</label>
+            <input
+              type="number"
+              placeholder="₹ Enter amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+          </div>
 
-      {result && (
-        <pre style={{ marginTop: 16 }}>
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
+          <div className="transfer-action">
+            <button disabled={loading}>
+              {loading ? "Processing…" : "Transfer"}
+            </button>
+          </div>
+        </form>
 
-      {error && <p className="error">{error}</p>}
+        {result && (
+          <div className={`transfer-risk ${riskClass}`}>
+            <strong>Status:</strong>{" "}
+            {result.decision || "Processed"}
+            <br />
+            <strong>Risk score:</strong>{" "}
+            {riskScore?.toFixed(2)}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

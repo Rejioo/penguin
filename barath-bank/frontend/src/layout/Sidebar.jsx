@@ -1,17 +1,40 @@
-// src/layout/Sidebar.jsx
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
+  
+  const isAdmin = user?.role === "ADMIN";
+
   return (
     <aside className="sidebar">
-      <h2 className="logo">SmartBank</h2>
+      <div className="sidebar-header">Barath Bank</div>
 
-      <nav>
+      <nav className="sidebar-nav">
+        {/* User links */}
         <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/accounts">Accounts</NavLink>
         <NavLink to="/transactions">Transactions</NavLink>
+        <NavLink to="/transfer">Transfer</NavLink>
         <NavLink to="/profile">Profile</NavLink>
+        <NavLink to="/security">Security</NavLink>
+
+        {/* Admin section */}
+        {isAdmin && (
+          <>
+            <div className="sidebar-divider">Admin</div>
+            <NavLink to="/admin">Admin Dashboard</NavLink>
+            <NavLink to="/admin/fraud">Fraud Review</NavLink>
+            <NavLink to="/admin/users">Users</NavLink>
+          </>
+        )}
       </nav>
+
+      <div className="sidebar-footer">
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
+      </div>
     </aside>
   );
 }
