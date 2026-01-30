@@ -30,11 +30,7 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <div className="sidebar-footer">
-        <button className="logout-btn" onClick={logout}>
-          Logout
-        </button>
-      </div>
+      
     </aside>
   );
 }

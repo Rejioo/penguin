@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
+const { sendOtpEmail } = require("../utils/mailer");
 
 // ---------------- HELPERS ----------------
 function generateOtp() {
@@ -112,8 +113,15 @@ async function register(req, res) {
     );
 
     await connection.commit();
+    console.log("📨 Sending OTP to:", email);
+
 
     console.log("REGISTER OTP:", otp);
+    await sendOtpEmail({
+      to: email,
+      otp,
+      purpose: "REGISTER",
+    });
 
     return res.status(201).json({
       message: "Registration successful. OTP sent.",
@@ -159,6 +167,11 @@ async function loginStep1(req, res) {
     );
 
     console.log("LOGIN OTP:", otp);
+    await sendOtpEmail({
+        to: user.email,
+        otp,
+        purpose: "LOGIN",
+      });
 
     return res.json({ message: "OTP sent" });
   } catch (err) {
@@ -328,6 +341,11 @@ async function resendRegisterOtp(req, res) {
     );
 
     console.log("RESEND REGISTER OTP:", otp);
+    await sendOtpEmail({
+      to: user.email,
+      otp,
+      purpose: "REGISTER",
+    });
 
     return res.json({ message: "OTP resent" });
   } catch (err) {

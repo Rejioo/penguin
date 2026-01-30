@@ -29,6 +29,9 @@ data = pd.DataFrame({
     "merchant_risk_score": np.random.beta(2, 5, size=N_SAMPLES),
     "time_since_last_txn_min": np.random.exponential(scale=120, size=N_SAMPLES),
 })
+data["transaction_count_24h"] = np.clip(
+    data["transaction_count_24h"], 0, 30
+)
 
 # -----------------------------
 # 2) Probabilistic fraud labeling
@@ -38,7 +41,7 @@ fraud_score = (
     (data["amount"] > 40000).astype(int) * 0.50 +
     (data["is_new_device"] == 1).astype(int) * 0.25 +
     (data["is_foreign_transaction"] == 1).astype(int) * 0.25 +
-    (data["transaction_count_24h"] >= 5).astype(int) * 0.30 +
+    (data["transaction_count_24h"] >= 20).astype(int) * 0.30 +
     (data["device_risk_score"] > 0.6).astype(int) * 0.30 +
     (data["ip_risk_score"] > 0.6).astype(int) * 0.30 +
     (data["time_since_last_txn_min"] < 5).astype(int) * 0.20

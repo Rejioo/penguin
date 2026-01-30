@@ -1,4 +1,6 @@
-import { Outlet } from "react-router-dom";
+
+import { Outlet, Navigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 

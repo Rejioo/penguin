@@ -1,33 +1,27 @@
+
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import AdminSidebar from "./AdminSidebar";
+import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
 export default function AdminLayout() {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return <div className="page muted">Checking admin session…</div>;
-  }
+  if (loading) return null;
 
-  // ❌ Not logged in
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // ❌ Logged in but not admin
-  if (user.role !== "ADMIN") {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // if (user.role !== "ADMIN") {
+  //   return <Navigate to="/dashboard" replace />;
+  // }
 
   return (
     <div className="app-shell">
-      {/* Sidebar */}
-      <AdminSidebar />
-
-      {/* Main content */}
+      <Sidebar />
       <div className="app-main">
-        <Topbar title="Admin Panel" subtitle="Fraud & system control" />
+        <Topbar />
         <div className="app-content">
           <Outlet />
         </div>

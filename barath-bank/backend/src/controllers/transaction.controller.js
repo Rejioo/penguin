@@ -179,12 +179,26 @@ exports.transfer = async (req, res) => {
     // =========================
     // 6️⃣ ML fraud payload
     // =========================
+
+
+    const deviceRisk =
+  isNewDevice
+    ? amount < 500
+      ? 0.1
+      : amount < 2000
+      ? 0.25
+      : amount < 10000
+      ? 0.45
+      : 0.7
+    : 0.05;
+
+    
     const fraudPayload = {
       amount,
       hour,
       is_new_device: isNewDevice ? 1 : 0,
       is_foreign_transaction: isForeign ? 1 : 0,
-      transaction_count_24h: txnCount24h,
+      transaction_count_24h: 3,
       device_risk_score: isNewDevice ? 0.6 : 0.1,
       ip_risk_score: isForeign ? 0.7 : 0.1,
       merchant_risk_score: 0.1,
@@ -227,13 +241,15 @@ exports.transfer = async (req, res) => {
       txnCount24h,
     });
 
-    const finalRisk = Math.max( ruleRisk);
+    const finalRisk = Math.max( rawMlRisk, ruleRisk);
     const { decision, status } = decideAction(finalRisk);
 
     console.log("=== FRAUD DEBUG ===");
     console.log({ amount, isNewDevice, isForeign, txnCount24h });
-    console.log("ML:", mlRisk, "RULE:", ruleRisk, "FINAL:", finalRisk);
-console.log("Boosted ML risk:", boostedMlRisk);
+    console.log("ML:", rawMlRisk, "RULE:", ruleRisk, "FINAL:", finalRisk);
+
+    console.log("raw ML risk:", rawMlRisk);
+    
 
     console.log("DECISION:", decision);
     console.log("===================");
@@ -286,39 +302,6 @@ console.log("Boosted ML risk:", boostedMlRisk);
   }
 };
 
-/**
- * TRANSACTION HISTORY
- */
-// exports.getMyTransactions = async (req, res) => {
-//   const userId = req.user.userId;
-
-//   try {
-//     const [rows] = await pool.query(
-//       `SELECT t.id,
-//               t.amount,
-//               t.status,
-//               t.risk_score,
-//               t.created_at,
-//               fa.account_number AS from_account,
-//               ta.account_number AS to_account
-//        FROM transactions t
-//        JOIN accounts fa ON t.from_account_id = fa.id
-//        JOIN accounts ta ON t.to_account_id = ta.id
-//        WHERE fa.user_id = ? OR ta.user_id = ?
-//        ORDER BY t.created_at DESC`,
-//       [userId, userId]
-//     );
-
-//     return res.json(rows);
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ message: "Failed to fetch transactions" });
-//   }
-// };
-/**
- * TRANSACTION HISTORY
- * GET /api/transactions
- */
 exports.getMyTransactions = async (req, res) => {
   const userId = req.user.userId;
 

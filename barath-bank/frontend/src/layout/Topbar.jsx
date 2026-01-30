@@ -1,13 +1,25 @@
-// src/layout/Topbar.jsx
+import { useAuth } from "../auth/AuthContext";
+
 export default function Topbar() {
+  const { user, logout } = useAuth();
+
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <h2>Smart Banking</h2>
+        <div className="topbar-title">SmartBank</div>
+        <div className="topbar-subtitle">
+          {user?.role === "ADMIN" ? "Admin Console" : "Personal Banking"}
+        </div>
       </div>
 
       <div className="topbar-right">
-        <span className="user-chip">You</span>
+        <span className="user-name">
+          {user?.username || user?.email}
+        </span>
+
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
       </div>
     </header>
   );

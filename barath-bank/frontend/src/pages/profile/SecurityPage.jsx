@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
 
+
+
+
+function formatDate(value) {
+  if (!value) return "Never";
+
+  const date = new Date(value);
+  return isNaN(date.getTime())
+    ? "Unknown"
+    : date.toLocaleString("en-IN");
+}
+
 export default function SecurityPage() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +50,7 @@ export default function SecurityPage() {
             <tbody>
               {sessions.map((s, i) => (
                 <tr key={i}>
-                  <td>{new Date(s.last_seen).toLocaleString()}</td>
+                  <td>{formatDate(s.last_seen)}</td>
                   <td>{s.ip_address}</td>
                   <td>{s.country_code || "-"}</td>
                   <td>
@@ -59,4 +71,14 @@ export default function SecurityPage() {
       </div>
     </div>
   );
+}
+function formatLastSeen(row) {
+  const value = row.last_seen || row.first_seen;
+
+  if (!value) return "Just now";
+
+  const date = new Date(value);
+  return isNaN(date.getTime())
+    ? "Unknown"
+    : date.toLocaleString("en-IN");
 }
